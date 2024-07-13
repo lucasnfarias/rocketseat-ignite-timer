@@ -34,7 +34,7 @@ export function History() {
                 status,
               }) => {
                 const publishedDateRelativeToNow = formatDistanceToNow(
-                  startDate,
+                  new Date(startDate),
                   {
                     locale: ptBR,
                     addSuffix: true,
@@ -47,20 +47,28 @@ export function History() {
                     <td>{publishedDateRelativeToNow}</td>
                     <td>
                       {status === "ongoing" && (
-                        <Status statusColor="yellow">Em andamento</Status>
+                        <Status statuscolor="yellow">Em andamento</Status>
                       )}
                       {status === "interrupted" && (
                         <Status
-                          title={interruptedDate?.toDateString()}
-                          statusColor="red"
+                          title={
+                            typeof interruptedDate === "string"
+                              ? interruptedDate
+                              : interruptedDate?.toDateString()
+                          }
+                          statuscolor="red"
                         >
                           Interrompido
                         </Status>
                       )}
                       {status === "finished" && (
                         <Status
-                          title={finishedDate?.toDateString()}
-                          statusColor="green"
+                          title={
+                            typeof finishedDate === "string"
+                              ? finishedDate
+                              : finishedDate?.toDateString()
+                          }
+                          statuscolor="green"
                         >
                           Concluído
                         </Status>
