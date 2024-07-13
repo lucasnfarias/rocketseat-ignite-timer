@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext, useState } from "react";
+import { createContext, ReactNode, useState } from "react";
 
 export interface Cycle {
   id: string;
@@ -10,20 +10,34 @@ export interface Cycle {
   status: "ongoing" | "interrupted" | "finished";
 }
 
+interface CreateNewCycleData {
+  task: string;
+  minutesAmount: number;
+}
+
 interface CyclesContextData {
   cycles: Cycle[];
-  setCycles: React.Dispatch<React.SetStateAction<Cycle[]>>;
   activeCycle: Cycle | undefined;
   activeCycleId: string | null;
   amountSecondsPassed: number;
   finishCurrentCycle: () => void;
   updateActiveCycleId: (cycleId: string | null) => void;
   updateAmountSecondsPassed: (seconds: number) => void;
+  createNewCycle: (data: CreateNewCycleData) => void;
+  interruptCurrentCycle: () => void;
 }
 
-const CyclesContext = createContext<CyclesContextData>({} as CyclesContextData);
+export const CyclesContext = createContext<CyclesContextData>(
+  {} as CyclesContextData
+);
 
-export const CyclesProvider = ({ children }: { children: ReactNode }) => {
+interface CyclesContextProviderProps {
+  children: ReactNode;
+}
+
+export const CyclesContextProvider = ({
+  children,
+}: CyclesContextProviderProps) => {
   const [cycles, setCycles] = useState<Cycle[]>([]);
   const [activeCycleId, setActiveCycleId] = useState<string | null>(null);
   const [amountSecondsPassed, setAmountSecondsPassed] = useState(0);
@@ -45,6 +59,38 @@ export const CyclesProvider = ({ children }: { children: ReactNode }) => {
     );
   }
 
+  function createNewCycle({ task, minutesAmount }: CreateNewCycleData) {
+    const id = new Date().getTime().toString();
+    const newCycle: Cycle = {
+      id,
+      task,
+      minutesAmount,
+      startDate: new Date(),
+      status: "ongoing",
+    };
+
+    setCycles((state) => [...state, newCycle]);
+    updateActiveCycleId(id);
+    updateAmountSecondsPassed(0);
+  }
+
+  function interruptCurrentCycle() {
+    setCycles((state) =>
+      state.map((cycle) => {
+        if (cycle.id === activeCycleId) {
+          return {
+            ...cycle,
+            interruptedDate: new Date(),
+            status: "interrupted",
+          };
+        }
+        return cycle;
+      })
+    );
+
+    updateActiveCycleId(null);
+  }
+
   function updateActiveCycleId(cycleId: string | null) {
     setActiveCycleId(cycleId);
   }
@@ -63,16 +109,11 @@ export const CyclesProvider = ({ children }: { children: ReactNode }) => {
         finishCurrentCycle,
         updateActiveCycleId,
         updateAmountSecondsPassed,
-        setCycles,
+        createNewCycle,
+        interruptCurrentCycle,
       }}
     >
       {children}
     </CyclesContext.Provider>
   );
 };
-
-export function useCycles(): CyclesContextData {
-  const context = useContext(CyclesContext);
-
-  return context;
-}
